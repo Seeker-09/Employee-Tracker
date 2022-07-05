@@ -29,6 +29,10 @@ promptUser = () => {
             case "View all Roles":
                 viewAllRoles();
                 break;
+
+            case "View all Employees":
+                viewAllEmployees();
+                break;
         }
     })
 }
@@ -54,6 +58,24 @@ viewAllRoles = () => {
         FROM roles
         LEFT JOIN departments
         ON roles.department_id = departments.id`;
+
+    db.query(sql, (err, rows) => {
+        if(err) {
+            console.log(err);
+        }
+        console.log("\n");
+        console.table(rows);
+    })
+
+    promptUser();
+}
+
+viewAllEmployees = () => {
+    const sql = `
+        SELECT employees.*, CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name, roles.title AS role
+        FROM employees
+        LEFT JOIN employees manager ON employees.manager_id = manager.id
+        LEFT JOIN roles ON employees.role_id = roles.id`
 
     db.query(sql, (err, rows) => {
         if(err) {

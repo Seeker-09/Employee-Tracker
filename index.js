@@ -21,16 +21,39 @@ promptUser = () => {
         }
     ])
     .then(answer => {
-        console.log(answer.view);
         switch(answer.view) {
             case "View all Departments":
                 viewAllDepartments();
+                break;
+
+            case "View all Roles":
+                viewAllRoles();
+                break;
         }
     })
 }
 
 viewAllDepartments = () => {
     const sql = `SELECT * FROM departments`
+
+    db.query(sql, (err, rows) => {
+        if(err) {
+            console.log(err);
+        }
+        console.log("\n");
+        console.table(rows);
+    })
+
+    promptUser();
+}
+
+viewAllRoles = () => {
+    const sql = `
+        SELECT roles.*, departments.name
+        AS department_name
+        FROM roles
+        LEFT JOIN departments
+        ON roles.department_id = departments.id`;
 
     db.query(sql, (err, rows) => {
         if(err) {

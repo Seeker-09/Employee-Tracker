@@ -1,17 +1,11 @@
 {
-  "dependencies": {
-    "console.table": "^0.10.0",
-    "inquirer": "^9.0.0",
-    "mysql2": "^2.3.3"
-  },
   "name": "employee-tracker",
-  "description": "",
   "version": "1.0.0",
+  "description": "",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": ""
+    "start": "index.js"
   },
   "repository": {
     "type": "git",
@@ -22,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/Seeker-09/Employee-Tracker/issues"
   },
-  "homepage": "https://github.com/Seeker-09/Employee-Tracker#readme"
+  "homepage": "https://github.com/Seeker-09/Employee-Tracker#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "inquirer": "^8.2.4",
+    "mysql2": "^2.3.3"
+  }
 }

@@ -163,27 +163,45 @@ addRolePrompt = () => {
         },
         {
             type: "input",
-            name: "roleDepartmentId",
+            name: "roleDepartment",
             message: "What is the id of the department of this role?"
         }
     ])
 }
 
 addRole = role => {
-    const sql = `
-        INSERT INTO roles (title, salary, department_id)
-        VALUES (?, ?, ?)`
-    const params = [role.roleTitle, role.roleSalary, role.roleDepartmentId]
+    let sql;
+    let params;
 
-    db.query(sql, params, (err, result) => {
+    // get the deparment id 
+    sql = `
+        SELECT department_id
+        FROM departments
+        WHERE name = ?`
+    params = [role.roleDepartment]
+    db.query(sql, params, (err, rows) => {
         if(err) {
             console.log(err);
             return;
         }
+        console.log(rows[0].department_id);
 
-        console.log(`${role.roleTitle} has been added`);
-        promptUser();
-    })
+        // make the new role
+        sql = `
+        INSERT INTO roles (title, salary, department_id)
+        VALUES (?, ?, ?)`
+        params = [role.roleTitle, role.roleSalary, rows[0].department_id]
+
+        db.query(sql, params, (err, result) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+
+            console.log(`${role.roleTitle} has been added`);
+            promptUser();
+        })
+    }) 
 }
 
 addEmployeePrompt = () => {

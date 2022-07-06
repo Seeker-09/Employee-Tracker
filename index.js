@@ -53,7 +53,7 @@ viewAllDepartments = () => {
 
 viewAllRoles = () => {
     const sql = `
-        SELECT roles.*, departments.name
+        SELECT roles.id, roles.title, roles.salary, departments.name
         AS department_name
         FROM roles
         LEFT JOIN departments

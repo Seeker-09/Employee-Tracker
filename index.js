@@ -1,8 +1,6 @@
 const inquirer = require("inquirer");
 const db = require("./db/connection");
 
-
-
 promptUser = () => {
     return inquirer.prompt([
         {
@@ -21,6 +19,7 @@ promptUser = () => {
         }
     ])
     .then(answer => {
+        // can possibly reference answer
         switch(answer.view) {
             case "View all Departments":
                 viewAllDepartments();
@@ -46,6 +45,10 @@ promptUser = () => {
             case "Add an Employee":
                 addEmployeePrompt()
                     .then(employee => addEmployee(employee));
+                return;
+
+            case "Update an Employee Role":
+                updateEmployee();
                 return;
 
         }
@@ -105,7 +108,7 @@ viewAllEmployees = () => {
         FROM employees
         LEFT JOIN employees manager ON employees.manager_id = manager.employee_id
         LEFT JOIN roles ON employees.role_id = roles.role_id
-        LEFT JOIN departments ON roles.role_id = departments.department_id`
+        LEFT JOIN departments ON roles.department_id = departments.department_id`
 
     db.query(sql, (err, rows) => {
         if(err) {
@@ -228,6 +231,57 @@ addEmployee = employee => {
         console.log(`${employee.employeeFirstName} has been added`);
         promptUser();
     })
+}
+
+updateEmployee = () => {
+    const sql = `
+        SELECT CONCAT(employees.first_name, ' ', employees.last_name) AS employee_name
+        FROM employees`
+
+    db.query(sql, (err, rows) => {
+        if(err) {
+            console.log(err);
+            return;
+        }
+
+        console.log(rows[1].employee_name)
+        // can possibly use destructuring 
+        let employeeNames = [];
+        for(let i = 0; i < rows.length; i++) {
+            employeeNames.push(rows[i].employee_name)
+        }
+
+        return inquirer.prompt([
+            {
+                type: "list",
+                name: "employeeNames",
+                message: "Which employee's role would you like to update?",
+                choices: employeeNames
+            },
+            {
+                type: "input",
+                name: "role",
+                message: "What is the ID of the role you would like to add?"
+            }
+        ])
+        .then(updateInfo => {
+            const sql = `
+                UPDATE employees
+                SET role_id = ?
+                WHERE CONCAT(employees.first_name, ' ', employees.last_name) = ?`
+            const params = [updateInfo.role, updateInfo.employeeNames]
+
+            db.query(sql, params, (err, result) => {
+                if(err) {
+                    console.log(err);
+                    return;
+                }
+        
+                console.log("Role has been updated");
+                promptUser();
+            })
+        })
+    }) 
 }
 
 startApp = () => {

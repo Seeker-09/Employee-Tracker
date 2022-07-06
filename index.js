@@ -14,7 +14,7 @@ promptUser = () => {
                 "View all Roles",
                 "View all Employees",
                 "Add a Department",
-                "Add a Role",
+                "Add a Role (Suggestion: Use 'View all Departmenst' before selecting)",
                 "Add an Employee",
                 "Update an Employee Role"
             ]
@@ -38,10 +38,16 @@ promptUser = () => {
                     .then(department => addDepartment(department));
                 break;
 
-            case "Add a Role":
+            case "Add a Role (Suggestion: Use 'View all Departmenst' before selecting)":
                 addRolePrompt()
                     .then(role => addRole(role));
                 break;
+
+            case "Add an Employee":
+                addEmployeePrompt()
+                    .then(employee => addEmployee(employee));
+                return;
+
         }
     })
 }
@@ -66,13 +72,13 @@ viewAllDepartments = () => {
 viewAllRoles = () => {
     const sql = `
         SELECT 
-            roles.id, 
+            roles.role_id, 
             roles.title, 
             roles.salary, 
             departments.name AS department_name
         FROM roles
         LEFT JOIN departments
-        ON roles.department_id = departments.id`;
+        ON roles.department_id = departments.department_id`;
 
     db.query(sql, (err, rows) => {
         if(err) {
@@ -90,17 +96,16 @@ viewAllRoles = () => {
 viewAllEmployees = () => {
     const sql = `
         SELECT 
-            employees.id,
+            employees.employee_id,
             employees.first_name, 
             employees.last_name, 
             CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name, roles.title AS role,
             roles.salary AS salary,
-            roles.id,
             departments.name AS department
         FROM employees
-        LEFT JOIN employees manager ON employees.manager_id = manager.id
-        LEFT JOIN roles ON employees.role_id = roles.id
-        LEFT JOIN departments ON roles.id = departments.id`
+        LEFT JOIN employees manager ON employees.manager_id = manager.employee_id
+        LEFT JOIN roles ON employees.role_id = roles.role_id
+        LEFT JOIN departments ON roles.role_id = departments.department_id`
 
     db.query(sql, (err, rows) => {
         if(err) {
@@ -174,6 +179,53 @@ addRole = role => {
         }
 
         console.log(`${role.roleTitle} has been added`);
+        promptUser();
+    })
+}
+
+addEmployeePrompt = () => {
+    return inquirer.prompt([
+        {
+            type: "input",
+            name: "employeeFirstName",
+            message: "What is the first name of the employee?"
+        },
+        {
+            type: "input",
+            name: "employeeLastName",
+            message: "What is the last name of the employee?"
+        },
+        {
+            type: "input",
+            name: "employeeRole",
+            message: "What is the id of the role of the employee?"
+        },
+        {
+            type: "input",
+            name: "employeeManager",
+            message: "What is the id of the manager of this employee?"
+        }
+    ])
+}
+
+addEmployee = employee => {
+    const sql = `
+        INSERT INTO employees (first_name, last_name, role_id, manager_id)
+        VALUES (?, ?, ?, ?)`
+    const params = [
+        employee.employeeFirstName, 
+        employee.employeeLastName, 
+        employee.employeeRole,
+        employee.employeeManager
+    ]
+
+    db.query(sql, params, (err, result) => {
+        if(err) {
+            console.log(err);
+            return;
+        }
+
+        console.log(`${employee.employeeFirstName} has been added`);
         promptUser();
     })
 }

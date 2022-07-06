@@ -33,16 +33,22 @@ promptUser = () => {
             case "View all Employees":
                 viewAllEmployees();
                 break;
+            case "Add a Department":
+                addDepartmentPrompt()
+                    .then(department => addDepartment(department));
+                break;
         }
     })
 }
 
+// show all departments
 viewAllDepartments = () => {
     const sql = `SELECT * FROM departments`
 
     db.query(sql, (err, rows) => {
         if(err) {
             console.log(err);
+            return;
         }
         console.log("\n");
         console.table(rows);
@@ -51,10 +57,14 @@ viewAllDepartments = () => {
     promptUser();
 }
 
+// show job title, role id, and department 
 viewAllRoles = () => {
     const sql = `
-        SELECT roles.id, roles.title, roles.salary, departments.name
-        AS department_name
+        SELECT 
+            roles.id, 
+            roles.title, 
+            roles.salary, 
+            departments.name AS department_name
         FROM roles
         LEFT JOIN departments
         ON roles.department_id = departments.id`;
@@ -62,6 +72,7 @@ viewAllRoles = () => {
     db.query(sql, (err, rows) => {
         if(err) {
             console.log(err);
+            return;
         }
         console.log("\n");
         console.table(rows);
@@ -70,6 +81,7 @@ viewAllRoles = () => {
     promptUser();
 }
 
+// show employee id, first name, last name, job title, department, salary, and manager
 viewAllEmployees = () => {
     const sql = `
         SELECT 
@@ -88,12 +100,40 @@ viewAllEmployees = () => {
     db.query(sql, (err, rows) => {
         if(err) {
             console.log(err);
+            return;
         }
         console.log("\n");
         console.table(rows);
     })
 
     promptUser();
+}
+
+addDepartmentPrompt = () => {
+    return inquirer.prompt([
+        {
+            type: "input",
+            name: "departmentName",
+            message: "What is the name of the department you would like to add?"
+        }
+    ])
+}
+
+addDepartment = department => {
+    const sql = `
+        INSERT INTO departments (name)
+        VALUES (?)`
+    const params = [department.departmentName]
+
+    db.query(sql, params, (err, result) => {
+        if(err) {
+            console.log(err);
+            return;
+        }
+
+        console.log(`${department.departmentName} has been added`);
+        promptUser();
+    })
 }
 
 startApp = () => {

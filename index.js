@@ -12,7 +12,7 @@ promptUser = () => {
                 "View all Roles",
                 "View all Employees",
                 "Add a Department",
-                "Add a Role (Suggestion: Use 'View all Departmenst' before selecting)",
+                "Add a Role",
                 "Add an Employee",
                 "Update an Employee Role"
             ]
@@ -37,7 +37,7 @@ promptUser = () => {
                     .then(department => addDepartment(department));
                 break;
 
-            case "Add a Role (Suggestion: Use 'View all Departmenst' before selecting)":
+            case "Add a Role":
                 addRolePrompt()
                     .then(role => addRole(role));
                 break;
@@ -144,7 +144,7 @@ addDepartment = department => {
             return;
         }
 
-        console.log(`${department.departmentName} has been added`);
+        console.log(`Department has been added`);
         promptUser();
     })
 }
@@ -164,7 +164,7 @@ addRolePrompt = () => {
         {
             type: "input",
             name: "roleDepartment",
-            message: "What is the id of the department of this role?"
+            message: "What is the name of the department of this role?"
         }
     ])
 }
@@ -184,7 +184,6 @@ addRole = role => {
             console.log(err);
             return;
         }
-        console.log(rows[0].department_id);
 
         // make the new role
         sql = `
@@ -198,7 +197,7 @@ addRole = role => {
                 return;
             }
 
-            console.log(`${role.roleTitle} has been added`);
+            console.log(`Role has been added`);
             promptUser();
         })
     }) 
@@ -219,39 +218,70 @@ addEmployeePrompt = () => {
         {
             type: "input",
             name: "employeeRole",
-            message: "What is the id of the role of the employee?"
+            message: "What is the role of the employee?"
         },
         {
             type: "input",
             name: "employeeManager",
-            message: "What is the id of the manager of this employee?"
+            message: "What is the name of the manager of this employee?"
         }
     ])
 }
 
 addEmployee = employee => {
-    const sql = `
-        INSERT INTO employees (first_name, last_name, role_id, manager_id)
-        VALUES (?, ?, ?, ?)`
-    const params = [
-        employee.employeeFirstName, 
-        employee.employeeLastName, 
-        employee.employeeRole,
-        employee.employeeManager
-    ]
+    let sql;
+    let params;
 
-    db.query(sql, params, (err, result) => {
+    // get the role id
+    sql = `
+        SELECT role_id
+        FROM roles
+        WHERE title = ?`
+    params = [employee.employeeRole]
+    db.query(sql, params, (err, roleRow) => {
         if(err) {
             console.log(err);
             return;
         }
 
-        console.log(`${employee.employeeFirstName} has been added`);
-        promptUser();
-    })
+        // get the manager's id
+        sql = `
+            SELECT employee_id
+            FROM employees
+            WHERE CONCAT(first_name, ' ', last_name) = ?`
+        params = [employee.employeeManager]
+        db.query(sql, params, (err, managerRow) => {
+            if(err) {
+                console.log(err);
+                return;
+            }
+
+            // add the employee
+            sql = `
+                INSERT INTO employees (first_name, last_name, role_id, manager_id)
+                VALUES (?, ?, ?, ?)`
+            params = [
+                employee.employeeFirstName, 
+                employee.employeeLastName, 
+                roleRow[0].role_id,
+                managerRow[0].employee_id
+            ]
+
+            db.query(sql, params, (err, result) => {
+                if(err) {
+                    console.log(err);
+                    return;
+                }
+
+                console.log(`Employee has been added`);
+                promptUser();
+            })
+        })
+    }) 
 }
 
 updateEmployee = () => {
+    // get employee names
     const sql = `
         SELECT CONCAT(employees.first_name, ' ', employees.last_name) AS employee_name
         FROM employees`
@@ -262,8 +292,7 @@ updateEmployee = () => {
             return;
         }
 
-        console.log(rows[1].employee_name)
-        // can possibly use destructuring 
+        // put employee names in an array for inquirer
         let employeeNames = [];
         for(let i = 0; i < rows.length; i++) {
             employeeNames.push(rows[i].employee_name)
@@ -279,24 +308,40 @@ updateEmployee = () => {
             {
                 type: "input",
                 name: "role",
-                message: "What is the ID of the role you would like to add?"
+                message: "What is the name of the role you would like to add?"
             }
         ])
         .then(updateInfo => {
-            const sql = `
-                UPDATE employees
-                SET role_id = ?
-                WHERE CONCAT(employees.first_name, ' ', employees.last_name) = ?`
-            const params = [updateInfo.role, updateInfo.employeeNames]
+            let sql;
+            let params;
 
-            db.query(sql, params, (err, result) => {
+            // get role id
+            sql = `
+                SELECT role_id
+                FROM roles
+                WHERE title = ?`
+            params = [updateInfo.role]
+            db.query(sql, params, (err, row) => {
                 if(err) {
                     console.log(err);
                     return;
                 }
-        
-                console.log("Role has been updated");
-                promptUser();
+
+                // update the employee's role
+                sql = `
+                    UPDATE employees
+                    SET role_id = ?
+                    WHERE CONCAT(employees.first_name, ' ', employees.last_name) = ?`
+                params = [row[0].role_id, updateInfo.employeeNames]
+                db.query(sql, params, (err, result) => {
+                    if(err) {
+                        console.log(err);
+                        return;
+                    }
+            
+                    console.log("Role has been updated");
+                    promptUser();
+                })
             })
         })
     }) 

@@ -37,6 +37,11 @@ promptUser = () => {
                 addDepartmentPrompt()
                     .then(department => addDepartment(department));
                 break;
+
+            case "Add a Role":
+                addRolePrompt()
+                    .then(role => addRole(role));
+                break;
         }
     })
 }
@@ -132,6 +137,43 @@ addDepartment = department => {
         }
 
         console.log(`${department.departmentName} has been added`);
+        promptUser();
+    })
+}
+
+addRolePrompt = () => {
+    return inquirer.prompt([
+        {
+            type: "input",
+            name: "roleTitle",
+            message: "What is the name of the role you would like to add?"
+        },
+        {
+            type: "input",
+            name: "roleSalary",
+            message: "What is the salary of this role?"
+        },
+        {
+            type: "input",
+            name: "roleDepartmentId",
+            message: "What is the id of the department of this role?"
+        }
+    ])
+}
+
+addRole = role => {
+    const sql = `
+        INSERT INTO roles (title, salary, department_id)
+        VALUES (?, ?, ?)`
+    const params = [role.roleTitle, role.roleSalary, role.roleDepartmentId]
+
+    db.query(sql, params, (err, result) => {
+        if(err) {
+            console.log(err);
+            return;
+        }
+
+        console.log(`${role.roleTitle} has been added`);
         promptUser();
     })
 }
